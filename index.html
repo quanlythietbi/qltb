@@ -6505,11 +6505,29 @@ async function saveInlineEdit(event) {
     };
 
     // 5. Các hàm hỗ trợ nút bấm
-    window.openExecutionProfile = function(timestampKey) {
+    // === HÀM ĐÃ SỬA: Thêm yêu cầu xác thực Google trước khi mở modal ===
+    window.openExecutionProfile = async function(timestampKey) {
         if (!isAuthenticated) return showAuthError();
+
+        // 1. Yêu cầu/Kiểm tra quyền truy cập Google Drive trước
+        try {
+            // Hàm này sẽ kiểm tra token, nếu chưa có sẽ hiện popup đăng nhập Google
+            await requestGoogleAuth(); 
+        } catch (error) {
+            console.error("Lỗi xác thực Google:", error);
+            statusDiv.className = 'error';
+            statusDiv.innerText = "Bạn cần cấp quyền Google Drive để tải hồ sơ.";
+            return; // Dừng lại nếu không cấp quyền
+        }
+
+        // 2. Nếu đã có quyền, mở modal như bình thường
         const tsKey = String(timestampKey);
+        
         document.getElementById('uploadPdfModalTitle').textContent = 'Tải lên/Cập nhật Hồ sơ PDF';
+        
+        // Gán sự kiện cho nút Upload
         document.getElementById('uploadPdfButton').onclick = () => performPdfUpload(tsKey);
+        
         document.getElementById('pdf_file_input').value = '';
         document.getElementById('uploadPdfModal').style.display = 'block';
     };
